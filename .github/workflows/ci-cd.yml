@@ -54,27 +54,3 @@ jobs:
         echo "✅ Alle tests bestået! Koden er klar til deployment."
         echo "Pipeline gennemført succesfuldt!"
   
-  deploy:
-    name: Deploy til Railway
-    needs: test  # Kør kun hvis test job var successful
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-    # 1. Checkout kode
-    - name: Checkout kode
-      uses: actions/checkout@v3
-    
-    # 2. Deploy til Railway
-    - name: Deploy til Railway
-      uses: bervProject/railway-deploy@main
-      with:
-        railway_token: ${{ secrets.RAILWAY_TOKEN }}
-        service: my-calculator-app
-    
-    # 3. Deployment Success
-    - name: Deployment Success
-      if: success()
-      run: |
-        echo "🚀 App deployed til Railway!"
-        echo "Besøg din app på Railway dashboard for URL"
