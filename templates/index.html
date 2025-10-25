@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator - CI/CD Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .operations {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .op-btn {
+            background: #667eea;
+            color: white;
+        }
+        
+        .op-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .op-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .result-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .error {
+            color: #ef4444;
+            background: #fee;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.85em;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center;">
+            <span class="badge">✅ CI/CD Deployed</span>
+        </div>
+        
+        <h1>🧮 Calculator</h1>
+        <p class="subtitle">Demonstrerer automatisk CI/CD deployment</p>
+        
+        <div class="input-group">
+            <label for="numA">Tal A:</label>
+            <input type="number" id="numA" value="10" step="any">
+        </div>
+        
+        <div class="input-group">
+            <label for="numB">Tal B:</label>
+            <input type="number" id="numB" value="5" step="any">
+        </div>
+        
+        <div class="operations">
+            <button class="op-btn" onclick="calculate('add')">➕ Plus</button>
+            <button class="op-btn" onclick="calculate('subtract')">➖ Minus</button>
+            <button class="op-btn" onclick="calculate('multiply')">✖️ Gange</button>
+            <button class="op-btn" onclick="calculate('divide')">➗ Divider</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Beregner...</p>
+        </div>
+        
+        <div class="result-container" id="result">
+            <div class="result-label">Vælg en operation for at starte</div>
+        </div>
+        
+        <div class="footer">
+            <p>🚀 Automatisk deployed via GitHub Actions</p>
+            <p>Hver push til main → Tests → Deploy til Railway</p>
+            <p><a href="https://github.com/John-H-Aal/my-calculator-project" target="_blank">Se på GitHub</a></p>
+        </div>
+    </div>
+    
+    <script>
+        async function calculate(operation) {
+            const a = parseFloat(document.getElementById('numA').value);
+            const b = parseFloat(document.getElementById('numB').value);
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            
+            // Vis loading
+            resultDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ operation, a, b })
+                });
+                
+                const data = await response.json();
+                
+                // Skjul loading
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'flex';
+                
+                if (response.ok) {
+                    const opSymbols = {
+                        'add': '+',
+                        'subtract': '-',
+                        'multiply': '×',
+                        'divide': '÷'
+                    };
+                    
+                    resultDiv.className = 'result-container';
+                    resultDiv.innerHTML = `
+                        <div class="result-label">${a} ${opSymbols[operation]} ${b} =</div>
+                        <div class="result-value">${data.result}</div>
+                    `;
+                } else {
+                    resultDiv.className = 'result-container error';
+                    resultDiv.innerHTML = `
+                        <div class="result-label">❌ Fejl</div>
+                        <div style="color: #ef4444; font-size: 1.2em;">${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'flex';
+                resultDiv.className = 'result-container error';
+                resultDiv.innerHTML = `
+                    <div class="result-label">❌ Fejl</div>
+                    <div style="color: #ef4444;">Kunne ikke forbinde til serveren</div>
+                `;
+            }
+        }
+        
+        // Tillad Enter-tast til at udføre sidste operation
+        let lastOperation = 'add';
+        document.getElementById('numA').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculate(lastOperation);
+        });
+        document.getElementById('numB').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calculate(lastOperation);
+        });
+    </script>
+</body>
+</html>
